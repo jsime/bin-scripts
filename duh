@@ -1,0 +1,30 @@
+#!/bin/bash	
+
+DIR=$1
+DEPTH=$2
+
+if [[ -n $DIR && ! -d $DIR ]]; then
+	echo "Invalid directory path supplied!"
+	return 1
+fi
+if [[ -z $DIR ]]; then
+	DIR=.
+fi
+if [[ -n $DEPTH && $DEPTH -lt 0 ]]; then
+	echo "Negative depths are a no-no!"
+	return 1
+fi
+if [[ -z $DEPTH ]]; then
+	DEPTH=1
+fi
+du --max-depth=$DEPTH $DIR 2>/dev/null | sort -nr | \
+perl -ne 'chomp; ($s, $f) = split(/\s+/);
+	next LINE if $s < 1; ($s,$u) =
+	$s >= 1024**4 ? ($s / (1024**4), "PiB") :
+	$s >= 1024**3 ? ($s / (1024**3), "TiB") :
+	$s >= 1024**2 ? ($s / (1024**2), "GiB") :
+	$s >= 1024    ? ($s / 1024,      "MiB") :
+	($_, "KiB");
+	$f =~ s{\./}{};
+	print sprintf("  %7.2f %-3s >> %s\n", $s, $u, $f);'
+
