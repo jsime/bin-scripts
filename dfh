@@ -63,5 +63,5 @@ my $spec = join("  ", @s) . "\n";
 unshift(@k, shift(@k), [@ln]);
 push(@k, [@ln], pop(@k));
 
-print sprintf($spec, @{$_}) foreach @k;
+printf($spec, @{$_}) foreach @k;
 
