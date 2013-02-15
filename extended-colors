@@ -9,11 +9,11 @@ use Term::ReadKey;
 my $width = (GetTerminalSize())[0] - 2; # only care about width (with a right gutter)
 my $colors = get_colors();
 
-my $l = length((sort { length($b) <=> length($a) } keys %{$colors})[0]);
+my $l = (sort { $b <=> $a } map { length($_) } keys %{$colors})[0];
 my $cols = int($width / ($l + 2));
 my $i = 0;
 
-foreach my $color (sort keys %{$colors}) {
+foreach my $color (name_sort($l, keys %{$colors})) {
     printf('%s  ', fg($color, sprintf("%-${l}s", $color)));
     $i++;
 
@@ -24,3 +24,14 @@ foreach my $color (sort keys %{$colors}) {
 }
 
 print "\n";
+
+sub name_sort {
+    my ($l, @names) = @_;
+
+    my %maps;
+    $maps{$_->[0]} = $_->[1] for map {
+        [sprintf("%-${l}s%0${l}d", $_ =~ m{^(.*\D)(\d+)$}o ? ($1, $2) : ($_, 0)), $_]
+    } @names;
+
+    return map { $maps{$_} } sort keys %maps;
+}
