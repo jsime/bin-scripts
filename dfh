@@ -1,16 +1,19 @@
-#!/usr/bin/perl
+#!/usr/bin/env perl
 
 use strict;
 use warnings;
+
+use Term::ExtendedColor qw( fg clear );
+Term::ExtendedColor::autoreset(0);
 
 my ($i, %d);
 my $t_size = 0;
 my $t_used = 0;
 my $t_avail = 0;
 
-open(DF, "df -TP|") || die "Error listing devices: $!";
+open(my $df, "df -TP|") || die "Error listing devices: $!";
 
-while (<DF>) {
+while (<$df>) {
 	next if $_ =~ /^filesystem/oi;
 	chomp;
 
@@ -24,9 +27,9 @@ while (<DF>) {
 	$d{$t[6]} = [ @t ];
 }
 
-close(DF);
+close($df);
 
-my $p_use = sprintf("%d%%", $t_used / $t_size * 100);
+my $p_use = sprintf('%d%%', $t_used / $t_size * 100);
 
 my @k = (["Filesystem","Type","Size","Used","Avail","Use%","Mounted on"]);
 
@@ -48,7 +51,7 @@ foreach my $d (@k) {
 
 my (@s, @ln);
 
-for ($i = 0; $i < 7; $i++) {
+foreach my $i (0..6) {
 	my $l = 0;
 	foreach my $r (@k) {
 		my $l2 = length($r->[$i]);
@@ -58,10 +61,44 @@ for ($i = 0; $i < 7; $i++) {
 	push(@ln, '-' x $l);
 }
 
-my $spec = join("  ", @s) . "\n";
+my $spec = join("  ", @s);
 
 unshift(@k, shift(@k), [@ln]);
 push(@k, [@ln], pop(@k));
 
-printf($spec, @{$_}) foreach @k;
+# Header lines
+printf("%s${spec}%s\n", fg('steelblue1'), @{shift(@k)}, clear());
+printf("%s${spec}%s\n", fg('steelblue'), @{shift(@k)}, clear());
+
+# Mountpoint lines
+printf("%s${spec}%s\n", fg(usage_color($_->[5])), @{$_}, clear())
+    for map { shift(@k) } 0 .. $#k - 2;
+
+# Footer lines
+printf("%s${spec}%s\n", fg('steelblue'), @{shift(@k)}, clear());
+printf("%s${spec}%s\n", fg(usage_color($k[0][5])), @{$k[0]}, clear());
+print clear();
+
+sub usage_color {
+    my ($amt) = @_;
+
+    return 'reset' unless defined $amt && $amt =~ m{^(\d+(?:\.\d+)?)\%?$}o;
+    $amt = $1;
+
+    my %c = (
+        100 => 'blink red1',
+        95  => 'red1',
+        90  => 'orangered1',
+        85  => 'yellow18',
+        80  => 'yellow16',
+        75  => 'yellow14',
+        70  => 'yellow12',
+        65  => 'yellow10',
+        60  => 'yellow8',
+        50  => 'yellow4',
+        0   => 'reset'
+    );
+
+    return $c{(grep { $_ <= $amt } sort { $b <=> $a } keys %c)[0]} || 'reset';
+}
 
