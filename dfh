@@ -14,17 +14,17 @@ my $t_avail = 0;
 open(my $df, "df -TP|") || die "Error listing devices: $!";
 
 while (<$df>) {
-	next if $_ =~ /^filesystem/oi;
-	chomp;
+    next if $_ =~ /^filesystem/oi;
+    chomp;
 
-	my @t = split(/\s+/);
-	$t[0] = shift(@t) . ' ' . $t[0] if $t[1] =~ /^[A-Z]/o && $t[2] !~ /^\d+$/o;
+    my @t = split(/\s+/);
+    $t[0] = shift(@t) . ' ' . $t[0] if $t[1] =~ /^[A-Z]/o && $t[2] !~ /^\d+$/o;
 
-	$t_size += $t[2];
-	$t_used += $t[3];
-	$t_avail += $t[4];
+    $t_size += $t[2];
+    $t_used += $t[3];
+    $t_avail += $t[4];
 
-	$d{$t[6]} = [ @t ];
+    $d{$t[6]} = [ @t ];
 }
 
 close($df);
@@ -37,28 +37,28 @@ push(@k, $d{$_}) for sort keys %d;
 push(@k, ['','',$t_size,$t_used,$t_avail,$p_use,'']);
 
 foreach my $d (@k) {
-	foreach $i (qw( 2 3 4 )) {
-		next unless $d->[$i] =~ /^\d+$/o;
-		$d->[$i] =
-				$d->[$i] >= 1024**4	? sprintf("%.2fP", $d->[$i] / 1024**4)
-			:	$d->[$i] >= 1024**3	? sprintf("%.2fT", $d->[$i] / 1024**3)
-			:	$d->[$i] >= 1024**2	? sprintf("%.2fG", $d->[$i] / 1024**2)
-			:	$d->[$i] >= 1024	? sprintf("%.2fM", $d->[$i] / 1024)
-			:	$d->[$i] == 0		? ''
-			:	$d->[$i];
-	}
+    foreach $i (qw( 2 3 4 )) {
+        next unless $d->[$i] =~ /^\d+$/o;
+        $d->[$i] =
+              $d->[$i] >= 1024**4   ? sprintf("%.2fP", $d->[$i] / 1024**4)
+            : $d->[$i] >= 1024**3   ? sprintf("%.2fT", $d->[$i] / 1024**3)
+            : $d->[$i] >= 1024**2   ? sprintf("%.2fG", $d->[$i] / 1024**2)
+            : $d->[$i] >= 1024      ? sprintf("%.2fM", $d->[$i] / 1024)
+            : $d->[$i] == 0         ? ''
+            : $d->[$i];
+    }
 }
 
 my (@s, @ln);
 
 foreach my $i (0..6) {
-	my $l = 0;
-	foreach my $r (@k) {
-		my $l2 = length($r->[$i]);
-		$l = $l2 if $l2 > $l;
-	}
-	push(@s, "%" . ($i =~ /^(0|6)$/os ? "-" : "") . $l . "s");
-	push(@ln, '-' x $l);
+    my $l = 0;
+    foreach my $r (@k) {
+        my $l2 = length($r->[$i]);
+        $l = $l2 if $l2 > $l;
+    }
+    push(@s, "%" . ($i =~ /^(0|6)$/os ? "-" : "") . $l . "s");
+    push(@ln, '-' x $l);
 }
 
 my $spec = join("  ", @s);
