@@ -97,7 +97,11 @@ sub usage_color {
         65  => 'yellow10',
         60  => 'yellow8',
         50  => 'yellow4',
-        0   => 'reset'
+        40  => 'green7',
+        30  => 'green9',
+        20  => 'green5',
+        10  => 'green3',
+        0   => 'green1'
     );
 
     return $c{(grep { $_ <= $amt } sort { $b <=> $a } keys %c)[0]} || 'reset';
