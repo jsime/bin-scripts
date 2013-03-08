@@ -1,0 +1,24 @@
+#!/usr/bin/perl
+
+use strict;
+use warnings;
+
+use Term::ReadKey;
+
+my $width = (GetTerminalSize())[0] - 2; # only care about width (with a right gutter)
+
+my $l = length("colour255");
+my $cols = int($width / ($l + 2));
+my $i = 0;
+
+foreach my $n (0..255) {
+    printf("%s%-${l}s  ", "\x1b[38;5;${n}m", "colour${n}");
+    $i++;
+
+    if ($i >= $cols) {
+        print "\n";
+        $i = 0;
+    }
+}
+
+print "\n";
