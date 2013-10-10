@@ -59,7 +59,7 @@ foreach my $i (0..6) {
         $l = $l2 if $l2 > $l;
     }
     push(@s, "%" . ($i =~ /^(0|6)$/os ? "-" : "") . $l . "s");
-    push(@ln, '-' x $l);
+    push(@ln, '─' x $l);
 }
 
 my $spec = join("  ", @s);
