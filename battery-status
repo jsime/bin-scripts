@@ -1,20 +1,26 @@
 #!/bin/bash
 
-CMD="upower -i /org/freedesktop/UPower/devices/battery_BAT0"
-STATE=$($CMD | grep state | awk '{ print $2 }')
+UPOWER=$(which upower)
+CMD="$UPOWER -i /org/freedesktop/UPower/devices/battery_BAT0"
 
-case $STATE in
-    fully-charged)
-        echo -n "100%"
-        ;;
-    charging)
-        PERCENT=$($CMD | grep percentage | awk '{ print $2 }' | awk -F. '{ print $1 }')
-        TIMEFULL=$($CMD | grep 'time to full' | awk '{ print $4 " " $5}')
-        echo -n "Charging: $PERCENT% ($TIMEFULL)"
-        ;;
-    *)
-        PERCENT=$($CMD | grep percentage | awk '{ print $2 }' | awk -F. '{ print $1 }')
-        TIMEEMPTY=$($CMD | grep 'time to empty' | awk '{ print $4 " " $5}')
-        echo -n "Battery: $PERCENT% ($TIMEEMPTY)"
-        ;;
-esac
+if [[ -x $UPOWER ]]; then
+    STATE=$($CMD | grep state | awk '{ print $2 }')
+
+    case $STATE in
+        fully-charged)
+            echo -n "100%"
+            ;;
+        charging)
+            PERCENT=$($CMD | grep percentage | awk '{ print $2 }' | awk -F. '{ print $1 }')
+            TIMEFULL=$($CMD | grep 'time to full' | awk '{ print $4 " " $5}')
+            echo -n "Charging: $PERCENT% ($TIMEFULL)"
+            ;;
+        *)
+            PERCENT=$($CMD | grep percentage | awk '{ print $2 }' | awk -F. '{ print $1 }')
+            TIMEEMPTY=$($CMD | grep 'time to empty' | awk '{ print $4 " " $5}')
+            echo -n "Battery: $PERCENT% ($TIMEEMPTY)"
+            ;;
+    esac
+else
+    echo "No Battery"
+fi
