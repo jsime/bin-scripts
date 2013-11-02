@@ -1,0 +1,15 @@
+#!/bin/bash
+
+CURRENT=$(cat /sys/class/backlight/nvidia_backlight/brightness)
+MAXIMUM=$(cat /sys/class/backlight/nvidia_backlight/max_brightness)
+TARGET=$MAXIMUM
+
+if [[ -z $1 ]]; then
+    if [[ $CURRENT == $MAXIMUM ]]; then
+        TARGET=15
+    fi
+else
+    TARGET=$1
+fi
+
+echo $TARGET | sudo tee /sys/class/backlight/nvidia_backlight/brightness
