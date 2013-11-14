@@ -19,6 +19,10 @@ while (@ARGV) {
     } else {
         $marker = $arg;
     }
+
+    if ($arg =~ m{^\s*\-*h(elp)?\s*$}oi) {
+        usage();
+    }
 }
 
 my $r_width = int(($cols - length($timestamp) - 2) / 2);
@@ -34,4 +38,32 @@ sub rep {
     return unless $len > 0 && length($rep) > 0;
 
     return substr(($rep x ($len / length($rep))) . $rep, 0, $len);
+}
+
+sub usage {
+    print <<EOU;
+Simple line-marking tool that will place the current timestamp in the center of
+the line.
+
+Defaults to a single line using dashes on either side of the timestamp. Accepts
+optional arguments in any order. Any argument that is strictly a number will
+modify the number of marker lines printed. All other arguments are treated as
+the string to use for the marker. Currently only the last argument encountered
+(that isn't a series of digits) is used. The marker string may be any number of
+characters long. It will be truncated as necessary.
+
+In cases of an uneven number of columns available on the terminal for the
+marker strings, the left side will receive one extra character than the right.
+
+Examples (assuming a 72 character wide terminal):
+
+\$ mark 2 '*'
+************************ Thu Nov 14 14:56:13 2013 **********************
+************************ Thu Nov 14 14:56:13 2013 **********************
+\$ mark foobar
+foobarfoobarfoobarfoobar Thu Nov 14 14:57:29 2013 foobarfoobarfoobarfoob
+
+EOU
+
+exit;
 }
