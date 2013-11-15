@@ -1,0 +1,99 @@
+#!/usr/bin/env perl
+
+use strict;
+use warnings;
+
+use Cwd;
+use Getopt::Long;
+
+my $HELP;
+my $MAX_DEPTH;
+my @DIRS;
+
+GetOptions('help|h!' => \$HELP, 'depth|d' => \$MAX_DEPTH)
+    or die usage();
+
+exit usage() if $HELP;
+
+sub usage {
+    print <<EOU;
+$0 - Directory tree lister
+
+Summary:
+
+    $0 [-d 3] [./list ./of ./directories]
+
+Options:
+
+    --depth -d <num>   Maximum depth to display in the tree.
+
+    --help -h          Display this message and exit.
+
+EOU
+
+    return 0;
+}
+
+@DIRS = defined @ARGV && @ARGV > 0 ? @ARGV : getcwd();
+
+foreach my $dir (sort @DIRS) {
+    my %tree;
+
+    print $dir;
+
+    populate_tree(\%tree, $dir);
+
+    printf("    %d files, %s\n", $tree{'files'}, human_size($tree{'size'}));
+
+    show_tree(\%tree);
+}
+
+sub show_tree {
+    my ($tree, $prefix) = @_;
+
+    $prefix = '' unless $prefix;
+
+    my @dirs = sort keys %{$tree->{'dirs'}};
+    foreach my $dir (@dirs) {
+        my $last = $dir eq $dirs[-1] ? 1 : 0;
+
+        printf("%s  %s─%s    %d files, %s\n", $prefix, ($last ? '└' : '├'), $dir,
+            $tree->{'dirs'}{$dir}{'files'}, human_size($tree->{'dirs'}{$dir}{'size'}));
+
+        show_tree($tree->{'dirs'}{$dir}, sprintf("%s  %s", $prefix, ($last ? ' ' : '│')));
+    }
+}
+
+sub populate_tree {
+    my ($tree, $dir) = @_;
+
+    $tree->{'dirs'} = {};
+    $tree->{'files'} = 0;
+    $tree->{'size'} = 0;
+
+    opendir(my $DH, $dir) || die "Could not open $dir: $!";
+    while (my $fn = readdir($DH)) {
+        next if $fn =~ m{^\.+$}o;
+
+        if (-f "$dir/$fn") {
+            $tree->{'files'}++;
+            $tree->{'size'} += (stat "$dir/$fn")[7];
+        } elsif (-d "$dir/$fn") {
+            $tree->{'dirs'}{$fn} = {};
+        }
+    }
+    closedir($DH) || die "Error closing $dir: $!";
+
+    populate_tree($tree->{'dirs'}{$_}, "$dir/$_") for keys %{$tree->{'dirs'}};
+}
+
+sub human_size {
+    my ($bytes) = @_;
+
+    return sprintf('%.2f PB', $bytes / 1024**5) if $bytes >= 1024**5;
+    return sprintf('%.2f TB', $bytes / 1024**4) if $bytes >= 1024**4;
+    return sprintf('%.2f GB', $bytes / 1024**3) if $bytes >= 1024**3;
+    return sprintf('%.2f MB', $bytes / 1024**2) if $bytes >= 1024**2;
+    return sprintf('%.2f KB', $bytes / 1024**1) if $bytes >= 1024**1;
+    return sprintf('%d bytes', $bytes || 0);
+}
