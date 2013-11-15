@@ -16,12 +16,14 @@ GetOptions('help|h!' => \$HELP, 'depth|d' => \$MAX_DEPTH)
 exit usage() if $HELP;
 
 sub usage {
+    my $name = (split('/', $0))[-1];
+
     print <<EOU;
-$0 - Directory tree lister
+$name - Directory tree lister
 
 Summary:
 
-    $0 [-d 3] [./list ./of ./directories]
+    $name [-d 3] [./list ./of ./directories]
 
 Options:
 
