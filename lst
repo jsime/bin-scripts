@@ -83,6 +83,7 @@ sub populate_tree {
             $tree->{'files'}++;
             $tree->{'size'} += (stat "$dir/$fn")[7];
         } elsif (-d "$dir/$fn") {
+            return if $fn =~ m{^\.(git|svn)$}o;
             $tree->{'dirs'}{$fn} = {};
         }
     }
