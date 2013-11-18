@@ -61,7 +61,7 @@ sub show_tree {
     foreach my $dir (@dirs) {
         my $last = $dir eq $dirs[-1] ? 1 : 0;
 
-        printf("%s  %s─%-${len}s    %d files, %s\n", $prefix, ($last ? '└' : '├'), $dir,
+        printf("%s  %s─\x1b[34m%-${len}s\x1b[0m    %d files, %s\n", $prefix, ($last ? '└' : '├'), $dir,
             $tree->{'dirs'}{$dir}{'files'}, human_size($tree->{'dirs'}{$dir}{'size'}));
 
         show_tree($tree->{'dirs'}{$dir}, sprintf("%s  %s", $prefix, ($last ? ' ' : '│')));
