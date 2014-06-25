@@ -36,7 +36,7 @@ EOU
     return 0;
 }
 
-@DIRS = defined @ARGV && @ARGV > 0 ? @ARGV : getcwd();
+@DIRS = @ARGV && @ARGV > 0 ? @ARGV : getcwd();
 
 foreach my $dir (sort @DIRS) {
     my %tree;
