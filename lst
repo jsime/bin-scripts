@@ -3,6 +3,9 @@
 use strict;
 use warnings;
 
+use utf8;
+binmode(STDOUT, ":utf8");
+
 use Cwd;
 use Getopt::Long;
 
