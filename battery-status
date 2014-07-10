@@ -13,7 +13,7 @@ if [[ -x $UPOWER ]]; then
         charging)
             PERCENT=$($CMD | grep percentage | awk '{ print $2 }' | awk -F. '{ print $1 }')
             TIMEFULL=$($CMD | grep 'time to full' | awk '{ print $4 " " $5}')
-            echo -n "Charging: $PERCENT% ($TIMEFULL)"
+            echo -n "Charging: $PERCENT ($TIMEFULL)"
             ;;
         *)
             PERCENT=$($CMD | grep percentage | awk '{ print $2 }' | awk -F. '{ print $1 }')
