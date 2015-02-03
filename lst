@@ -8,12 +8,17 @@ binmode(STDOUT, ":utf8");
 
 use Cwd;
 use Getopt::Long;
+use Number::Format qw( format_number );
 
+my $FILES;
 my $HELP;
 my $MAX_DEPTH;
 my @DIRS;
 
-GetOptions('help|h!' => \$HELP, 'depth|d' => \$MAX_DEPTH)
+my $LPAD  = 3;
+my $WIDTH = 0;
+
+GetOptions('files|f!' => \$FILES, 'help|h!' => \$HELP, 'depth|d' => \$MAX_DEPTH)
     or die usage();
 
 exit usage() if $HELP;
@@ -29,6 +34,8 @@ Summary:
     $name [-d 3] [./list ./of ./directories]
 
 Options:
+
+    --files -f         Enables display of files in tree view.
 
     --depth -d <num>   Maximum depth to display in the tree.
 
@@ -48,7 +55,7 @@ foreach my $dir (sort @DIRS) {
 
     populate_tree(\%tree, $dir);
 
-    printf("    %d files, %s\n", $tree{'files'}, human_size($tree{'size'}));
+    printf("    %d files, %s\n", $tree{'total_files'}, human_size($tree{'total_size'}));
 
     show_tree(\%tree);
 }
@@ -61,30 +68,59 @@ sub show_tree {
     my $len = (sort { $b <=> $a } map { length($_) } keys %{$tree->{'dirs'}})[0];
 
     my @dirs = sort keys %{$tree->{'dirs'}};
+
+    my $width = $WIDTH - ($tree->{'depth'} * $LPAD);
+
+    if ($FILES) {
+        my @files = sort keys %{$tree->{'files'}};
+        foreach my $file (@files) {
+            my $last_file = $file eq $files[-1] ? 1 : 0;
+            printf("%s  %s─%-${width}s  %s\n",
+                $prefix,
+                ($last_file && @dirs < 1 ? '└' : '├'),
+                $file,
+                human_size($tree->{'files'}{$file})
+            );
+        }
+    }
+
     foreach my $dir (@dirs) {
         my $last = $dir eq $dirs[-1] ? 1 : 0;
 
-        printf("%s  %s─\x1b[34m%-${len}s\x1b[0m    %d files, %s\n", $prefix, ($last ? '└' : '├'), $dir,
-            $tree->{'dirs'}{$dir}{'files'}, human_size($tree->{'dirs'}{$dir}{'size'}));
+        printf("%s  %s─\x1b[34m%-${width}s\x1b[0m[%s files / %s]\n",
+            $prefix,
+            ($last ? '└' : '├'),
+            $dir,
+            format_number(scalar keys %{$tree->{'dirs'}{$dir}{'files'}}),
+            human_size($tree->{'dirs'}{$dir}{'total_size'}, 0)
+        );
 
         show_tree($tree->{'dirs'}{$dir}, sprintf("%s  %s", $prefix, ($last ? ' ' : '│')));
     }
 }
 
 sub populate_tree {
-    my ($tree, $dir) = @_;
+    my ($tree, $dir, $depth) = @_;
 
+    $tree->{'depth'} = $depth || 0;
     $tree->{'dirs'} = {};
-    $tree->{'files'} = 0;
-    $tree->{'size'} = 0;
+    $tree->{'files'} = {};
+    $tree->{'total_files'} = 0;
+    $tree->{'total_size'} = 0;
+
+    my $len = 0;
 
     opendir(my $DH, $dir) || die "Could not open $dir: $!";
     while (my $fn = readdir($DH)) {
         next if $fn =~ m{^\.+$}o;
 
+        $len = length($fn) if length($fn) > $len;
+
         if (-f "$dir/$fn") {
-            $tree->{'files'}++;
-            $tree->{'size'} += (stat "$dir/$fn")[7];
+            my $size = (stat "$dir/$fn")[7];
+            $tree->{'files'}{$fn} = $size;
+            $tree->{'total_size'} += $size;
+            $tree->{'total_files'}++;
         } elsif (-d "$dir/$fn") {
             next if $fn =~ m{^\.(git|svn)$}o;
             $tree->{'dirs'}{$fn} = {};
@@ -92,16 +128,28 @@ sub populate_tree {
     }
     closedir($DH) || die "Error closing $dir: $!";
 
-    populate_tree($tree->{'dirs'}{$_}, "$dir/$_") for keys %{$tree->{'dirs'}};
+    $len = $len + ($tree->{'depth'} * $LPAD);
+    $WIDTH = $len if $len > $WIDTH;
+
+    foreach my $subdir (keys %{$tree->{'dirs'}}) {
+        populate_tree($tree->{'dirs'}{$subdir}, "$dir/$subdir", $tree->{'depth'} + 1);
+        $tree->{'total_files'} += $tree->{'dirs'}{$subdir}{'total_files'};
+        $tree->{'total_size'} += $tree->{'dirs'}{$subdir}{'total_size'};
+    }
 }
 
 sub human_size {
-    my ($bytes) = @_;
+    my ($bytes, $padding) = @_;
 
-    return sprintf('%.2f PB', $bytes / 1024**5) if $bytes >= 1024**5;
-    return sprintf('%.2f TB', $bytes / 1024**4) if $bytes >= 1024**4;
-    return sprintf('%.2f GB', $bytes / 1024**3) if $bytes >= 1024**3;
-    return sprintf('%.2f MB', $bytes / 1024**2) if $bytes >= 1024**2;
-    return sprintf('%.2f KB', $bytes / 1024**1) if $bytes >= 1024**1;
-    return sprintf('%d bytes', $bytes || 0);
+    $padding = 1 unless defined $padding;
+
+    my $float_format = $padding ? '%7.2f' : '%.2f';
+    my $int_format   = $padding ? '%7d'   : '%d';
+
+    return sprintf("$float_format PB", $bytes / 1024**5) if $bytes >= 1024**5;
+    return sprintf("$float_format TB", $bytes / 1024**4) if $bytes >= 1024**4;
+    return sprintf("$float_format GB", $bytes / 1024**3) if $bytes >= 1024**3;
+    return sprintf("$float_format MB", $bytes / 1024**2) if $bytes >= 1024**2;
+    return sprintf("$float_format KB", $bytes / 1024**1) if $bytes >= 1024**1;
+    return sprintf("$int_format bytes", $bytes || 0);
 }
