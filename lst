@@ -13,13 +13,18 @@ use Number::Format qw( format_number );
 my $FILES;
 my $HELP;
 my $MAX_DEPTH;
+my $TREEONLY = 0;
 my @DIRS;
 
 my $LPAD  = 3;
 my $WIDTH = 0;
 
-GetOptions('files|f!' => \$FILES, 'help|h!' => \$HELP, 'depth|d' => \$MAX_DEPTH)
-    or die usage();
+GetOptions(
+    'files|f!'     => \$FILES,
+    'tree-only|t!' => \$TREEONLY,
+    'help|h!'      => \$HELP,
+    'depth|d'      => \$MAX_DEPTH
+) or die usage();
 
 exit usage() if $HELP;
 
@@ -36,6 +41,10 @@ Summary:
 Options:
 
     --files -f         Enables display of files in tree view.
+
+    --tree-only -t     Omits file counts and sizes in output and
+                       displays a tree or directories (and files if -f
+                       also given) only.
 
     --depth -d <num>   Maximum depth to display in the tree.
 
@@ -55,7 +64,11 @@ foreach my $dir (sort @DIRS) {
 
     populate_tree(\%tree, $dir);
 
-    printf("    %d files, %s\n", $tree{'total_files'}, human_size($tree{'total_size'}));
+    if ($TREEONLY) {
+        print "\n";
+    } else {
+        printf("    %d files, %s\n", $tree{'total_files'}, human_size($tree{'total_size'}));
+    }
 
     show_tree(\%tree);
 }
@@ -75,25 +88,41 @@ sub show_tree {
         my @files = sort keys %{$tree->{'files'}};
         foreach my $file (@files) {
             my $last_file = $file eq $files[-1] ? 1 : 0;
-            printf("%s  %s─%-${width}s  %s\n",
-                $prefix,
-                ($last_file && @dirs < 1 ? '└' : '├'),
-                $file,
-                human_size($tree->{'files'}{$file})
-            );
+            if ($TREEONLY) {
+                printf("%s  %s─%s\n",
+                    $prefix,
+                    ($last_file && @dirs < 1 ? '└' : '├'),
+                    $file
+                );
+            } else {
+                printf("%s  %s─%-${width}s  %s\n",
+                    $prefix,
+                    ($last_file && @dirs < 1 ? '└' : '├'),
+                    $file,
+                    human_size($tree->{'files'}{$file})
+                );
+            }
         }
     }
 
     foreach my $dir (@dirs) {
         my $last = $dir eq $dirs[-1] ? 1 : 0;
 
-        printf("%s  %s─\x1b[34m%-${width}s\x1b[0m[%s files / %s]\n",
-            $prefix,
-            ($last ? '└' : '├'),
-            $dir,
-            format_number(scalar keys %{$tree->{'dirs'}{$dir}{'files'}}),
-            human_size($tree->{'dirs'}{$dir}{'total_size'}, 0)
-        );
+        if ($TREEONLY) {
+            printf("%s  %s─\x1b[34m%s\x1b[0m\n",
+                $prefix,
+                ($last ? '└' : '├'),
+                $dir
+            );
+        } else {
+            printf("%s  %s─\x1b[34m%-${width}s\x1b[0m[%s files / %s]\n",
+                $prefix,
+                ($last ? '└' : '├'),
+                $dir,
+                format_number(scalar keys %{$tree->{'dirs'}{$dir}{'files'}}),
+                human_size($tree->{'dirs'}{$dir}{'total_size'}, 0)
+            );
+        }
 
         show_tree($tree->{'dirs'}{$dir}, sprintf("%s  %s", $prefix, ($last ? ' ' : '│')));
     }
