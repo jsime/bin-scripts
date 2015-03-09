@@ -23,7 +23,7 @@ GetOptions(
     'files|f!'     => \$FILES,
     'tree-only|t!' => \$TREEONLY,
     'help|h!'      => \$HELP,
-    'depth|d'      => \$MAX_DEPTH
+    'depth|d=i'    => \$MAX_DEPTH
 ) or die usage();
 
 exit usage() if $HELP;
