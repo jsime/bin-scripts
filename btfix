@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+NUMDEVS=$(hcitool dev | grep -v 'Devices:' | wc -l)
+HCINUM=$(rfkill list | grep -E 'hci[[:digit:]]' | awk -F: '{ print $1 }')
+BLOCKS=$(rfkill list $HCINUM | grep -E 'blocked:[[:space:]]yes' | wc -l)
+
+if [[ "$NUMDEVS" < 1 ]]; then
+    echo "No BT devices. Attempting to fix."
+    if [[ "$BLOCKS" > 0 ]]; then
+        echo "HCI Device found at $HCINUM. Unblocking."
+        rfkill unblock $HCINUM
+    else
+        echo "Could not find an HCI device with blocks. No changes being made."
+    fi
+else
+    echo "BT devices already working. No changes being made."
+fi
