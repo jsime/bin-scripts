@@ -14,12 +14,12 @@ my @names = qw(
     white
 );
 
-printf("%-10s", $_) for qw( Regular Bold Reverse Blink Crossed Italic Underline );
+printf("%-14s", $_) for qw( Regular Bold Reverse Blink Crossed Italic Underline );
 print "\n" . "-"x78 . "\n";
 
 foreach my $col (0..7) {
     my $fcol = 30 + $col;
-    my $name = sprintf("%-10s", $names[$col]);
+    my $name = sprintf("%-14s", $names[$col]);
     print
         "\x1b[0m", "\x1b[${fcol}m",   $name,
         "\x1b[0m", "\x1b[${fcol};1m", $name,
@@ -30,4 +30,18 @@ foreach my $col (0..7) {
         "\x1b[0m", "\x1b[${fcol};4m", $name,
         "\x1b[0m", "\n"
     ;
+}
+
+print "\n";
+foreach my $col (0..7) {
+    my $fcol = 30 + $col;
+    print
+        "\x1b[0m", "\x1b[${fcol}m", "\\[\\e[${fcol}m\\]    ",
+        "\x1b[0m", "\x1b[${fcol};1m", "\\[\\e[${fcol};1m\\]  ",
+        "\x1b[0m", "\x1b[${fcol};7m", "\\[\\e[${fcol};7m\\]  ",
+        "\x1b[0m", "\x1b[${fcol};5m", "\\[\\e[${fcol};5m\\]  ",
+        "\x1b[0m", "\x1b[${fcol};9m", "\\[\\e[${fcol};9m\\]  ",
+        "\x1b[0m", "\x1b[${fcol};3m", "\\[\\e[${fcol};3m\\]  ",
+        "\x1b[0m", "\x1b[${fcol};4m", "\\[\\e[${fcol};4m\\]  ",
+        "\x1b[0m", "\n"
 }
