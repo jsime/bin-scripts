@@ -40,6 +40,7 @@ my %blocks = (
     osver     => \&block_osver,
     osnamever => \&block_osnamever,
     host      => q/hostname/,
+    uptime    => \&block_uptime,
     user      => q/whoami/,
 );
 
@@ -189,4 +190,20 @@ sub block_osver {
 
 sub block_osnamever {
     return block_osname() . ' ' . block_osver();
+}
+
+sub block_uptime {
+    my $uptime = `uptime`;
+
+    if ($uptime =~ m{\s+(\d+)\s+days}oi) {
+        return sprintf('up %d days', $1);
+    } elsif ($uptime =~ m{\s+(\d+):(\d+)}o) {
+        if ($1 > 0) {
+            return sprintf('up %d hours', $2);
+        } else {
+            return sprintf('up %d min', $2);
+        }
+    } else {
+        return 'up <1 hour';
+    }
 }
