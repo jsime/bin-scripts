@@ -197,12 +197,14 @@ sub block_uptime {
 
     if ($uptime =~ m{\s+(\d+)\s+days}oi) {
         return sprintf('up %d days', $1);
-    } elsif ($uptime =~ m{\s+(\d+):(\d+)}o) {
+    } elsif ($uptime =~ m{up\s+(\d+):(\d+)}o) {
         if ($1 > 0) {
-            return sprintf('up %d hours', $2);
+            return sprintf('up %d hours', $1);
         } else {
             return sprintf('up %d min', $2);
         }
+    } elsif ($uptime =~ m{up\s+(\d+)\s+min}o) {
+        return sprintf('up %d min', $1);
     } else {
         return 'up <1 hour';
     }
