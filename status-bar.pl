@@ -42,6 +42,7 @@ my %blocks = (
     host      => q/hostname/,
     uptime    => \&block_uptime,
     user      => q/whoami/,
+    memuse    => \&block_memuse,
 );
 
 exit usage() if $HELP;
@@ -196,10 +197,10 @@ sub block_uptime {
     my $uptime = `uptime`;
 
     if ($uptime =~ m{\s+(\d+)\s+days}oi) {
-        return sprintf('up %d days', $1);
+        return sprintf('up %d day%s', $1, $1 > 1 ? 's' : '');
     } elsif ($uptime =~ m{up\s+(\d+):(\d+)}o) {
         if ($1 > 0) {
-            return sprintf('up %d hours', $1);
+            return sprintf('up %d hour%s', $1, $1 > 1 ? 's' : '');
         } else {
             return sprintf('up %d min', $2);
         }
@@ -207,5 +208,16 @@ sub block_uptime {
         return sprintf('up %d min', $1);
     } else {
         return 'up <1 hour';
+    }
+}
+
+sub block_memuse {
+    # update to optionally use Sys::MemInfo if installed?
+    my @free = split(/\s+/, `free | grep -E '^Mem:'`);
+
+    if (@free && @free >= 3 && $free[1] =~ m{^\d+$} && $free[2] =~ m{^\d+$}) {
+        return sprintf('%.1f/%.1fG', $free[2]/(1024**2), $free[1]/(1024**2));
+    } else {
+        return '??/??G';
     }
 }
